@@ -1,0 +1,23 @@
+version: 2
+
+sources:
+  - name: raw
+    description: Immutable CSV extracts from the core platform and legacy CRM.
+    schema: main
+    tables:
+      - name: members
+        description: Member records from the core platform (members.csv).
+        meta:
+          external_location: "read_csv('data/members.csv', all_varchar=true, header=true)"
+      - name: contributions
+        description: Contribution transactions (contributions.csv).
+        meta:
+          external_location: "read_csv('data/contributions.csv', all_varchar=true, header=true)"
+      - name: transfers
+        description: Pension transfer transactions (transfers.csv).
+        meta:
+          external_location: "read_csv('data/transfers.csv', all_varchar=true, header=true)"
+      - name: legacy_crm_members
+        description: Legacy CRM member export (legacy_crm_members.csv).
+        meta:
+          external_location: "read_csv('data/legacy_crm_members.csv', all_varchar=true, header=true)"

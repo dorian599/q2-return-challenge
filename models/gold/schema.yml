@@ -1,0 +1,50 @@
+version: 2
+
+models:
+  - name: gold_q2_return
+    description: >
+      Primary Q2 2026 regulatory return. One row per metric.
+      Contains all six required reporting metrics plus supporting breakdowns.
+    columns:
+      - name: metric_name
+        description: Name of the reported metric.
+        tests:
+          - not_null
+          - unique
+      - name: metric_category
+        description: Grouping category (membership, contributions, transfers, age_bands, pot_value).
+      - name: metric_value
+        description: Numeric value of the metric.
+        tests:
+          - not_null
+      - name: metric_unit
+        description: Unit of measure (count, GBP).
+      - name: reporting_period_start
+        description: Start of reporting period (2026-04-01).
+      - name: reporting_period_end
+        description: End of reporting period (2026-06-30).
+
+  - name: gold_q2_submission
+    description: >
+      Regulatory delivery view for the six SPEC metrics (12 long-format rows).
+      Filters gold_q2_return; excludes gross/refund breakdown and active_age_unknown.
+      Grain: one row per delivery metric line, ordered for submission.
+    columns:
+      - name: spec_metric_number
+        description: SPEC table metric number (1–6).
+      - name: spec_metric_label
+        description: Short label from SPEC.md for the metric category.
+      - name: metric_name
+        description: Internal metric key (matches gold_q2_return where included).
+        tests:
+          - not_null
+          - unique
+      - name: metric_value
+        description: Numeric value for submission.
+        tests:
+          - not_null
+
+  - name: gold_reconciliation_summary
+    description: >
+      Auditable reconciliation summary between core platform and legacy CRM.
+      One summary row with match/unmatch counts and conflict tallies.

@@ -1,0 +1,46 @@
+version: 2
+
+models:
+  - name: br_members
+    description: >
+      Raw member records from members.csv. One row per source record.
+      No deduplication, filtering, or business rules applied.
+    columns:
+      - name: member_id
+        description: Source member identifier as extracted from CSV.
+      - name: _source_file
+        description: Source filename for lineage.
+      - name: _source_row
+        description: Row number within the source file.
+
+  - name: br_contributions
+    description: >
+      Raw contribution transactions from contributions.csv.
+      One row per transaction including refunds (negative amounts).
+    columns:
+      - name: transaction_id
+        description: Source transaction identifier.
+      - name: member_id
+        description: Source member identifier.
+      - name: amount
+        description: Transaction amount as stored in source (may be negative).
+
+  - name: br_transfers
+    description: >
+      Raw transfer transactions from transfers.csv.
+      One row per transfer including pending (null completed_date) records.
+    columns:
+      - name: transfer_id
+        description: Source transfer identifier.
+      - name: direction
+        description: Transfer direction as stored in source (IN/OUT).
+
+  - name: br_legacy_crm_members
+    description: >
+      Raw legacy CRM member records from legacy_crm_members.csv.
+      One row per CRM record with no reconciliation applied.
+    columns:
+      - name: crm_id
+        description: Legacy CRM identifier.
+      - name: member_ref
+        description: Cross-reference to core platform member_id.

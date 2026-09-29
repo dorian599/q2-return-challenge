@@ -46,3 +46,40 @@ Clone this repository (do not fork it). Submit your solution as a separate priva
 If your submission progresses, we will invite you to a 60-minute live session with two members of the data team. You will run your pipeline on your own machine and walk us through it, make a change to the business rules on the spot, run the pipeline against a new data file we provide, and discuss how you would operate this in production against a regulatory deadline.
 
 Good luck, and thank you for your time.
+
+---
+
+## Solution: run the pipeline
+
+From a clean checkout (requires Python 3):
+
+```bash
+chmod +x run.sh
+./run.sh
+```
+
+This creates a virtualenv, installs `dbt-duckdb`, runs `dbt build`, and writes:
+
+| Output | Description |
+| --- | --- |
+| `output/q2_submission_2026Q2.csv` | **Six SPEC metrics** (12 rows, delivery format) |
+| `output/q2_return_2026Q2.csv` | Full return including gross/refund and age-unknown audit lines |
+| `q2_return.duckdb` | Local DuckDB database with all dbt models |
+
+See `NOTES.md` for assumptions, data-quality choices, and legacy reconciliation.
+
+## Regulatory delivery output
+
+The six metrics in `SPEC.md` are exposed as view **`gold_q2_submission`** (and CSV above). Query after `./run.sh`:
+
+```bash
+duckdb q2_return.duckdb -c "SELECT * FROM gold_q2_submission;"
+```
+
+Or in SQL:
+
+```sql
+SELECT * FROM gold_q2_submission;
+```
+
+For audit breakdowns (gross vs refund contributions, members with unknown age band), use `gold_q2_return` instead.

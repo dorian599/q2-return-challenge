@@ -1,0 +1,7 @@
+q2_return:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: q2_return.duckdb
+      threads: 4

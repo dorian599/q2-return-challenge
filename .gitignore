@@ -1,3 +1,17 @@
 .DS_Store
 .Rhistory
 .Rproj.user/
+
+# dbt
+target/
+dbt_packages/
+logs/
+*.duckdb
+*.duckdb.wal
+
+# Python
+.venv/
+__pycache__/
+
+# Pipeline output
+output/

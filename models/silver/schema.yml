@@ -1,0 +1,197 @@
+version: 2
+
+models:
+  - name: sl_members
+    description: >
+      Cleaned member records from the core platform. One row per logical member
+      after deduplication of casing/whitespace duplicates. Pot values converted to GBP.
+    columns:
+      - name: member_id
+        description: Normalised member identifier (uppercase, trimmed).
+        tests:
+          - not_null
+          - unique
+      - name: date_of_birth
+        description: Member date of birth.
+      - name: join_date
+        description: Date the member joined the scheme.
+      - name: leave_date
+        description: Date the member left, if applicable.
+      - name: status
+        description: Member status (ACTIVE or LEFT).
+        tests:
+          - accepted_values:
+              values: ['ACTIVE', 'LEFT']
+      - name: pot_value
+        description: Current pot value in GBP (converted from pence).
+      - name: dob_is_valid
+        description: False when DOB is after quarter end or on/after join date.
+
+  - name: sl_contributions
+    description: >
+      Cleaned contribution transactions. One row per transaction.
+      Negative amounts preserved for refund netting.
+    columns:
+      - name: transaction_id
+        description: Unique transaction identifier.
+        tests:
+          - not_null
+          - unique
+      - name: member_id
+        description: Normalised member identifier.
+        tests:
+          - not_null
+      - name: transaction_date
+        description: Date of the contribution transaction.
+        tests:
+          - not_null
+      - name: amount
+        description: Transaction amount in GBP (negative for refunds).
+        tests:
+          - not_null
+
+  - name: sl_transfers
+    description: >
+      Cleaned transfer transactions. One row per transfer.
+      Dates parsed from ISO or DD/MM/YYYY formats.
+    columns:
+      - name: transfer_id
+        description: Unique transfer identifier.
+        tests:
+          - not_null
+          - unique
+      - name: member_id
+        description: Normalised member identifier.
+        tests:
+          - not_null
+      - name: direction
+        description: Transfer direction (IN or OUT).
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['IN', 'OUT']
+      - name: amount
+        description: Transfer value in GBP.
+        tests:
+          - not_null
+      - name: completed_date
+        description: Date the transfer completed (null if pending).
+
+  - name: sl_legacy_crm_members
+    description: >
+      Cleaned legacy CRM member records. One row per CRM record.
+      Prepared for reconciliation against core platform members.
+    columns:
+      - name: legacy_member_id
+        description: Legacy CRM identifier (crm_id).
+        tests:
+          - not_null
+          - unique
+      - name: member_ref
+        description: Normalised cross-reference to core platform member_id.
+
+  - name: sl_member_reconciliation
+    description: >
+      Reconciliation of core platform members against legacy CRM records.
+      One row per current member, legacy member, or matched pair.
+      Grain varies by match_status.
+    columns:
+      - name: current_member_id
+        description: Core platform member identifier.
+      - name: legacy_member_id
+        description: Legacy CRM identifier.
+      - name: match_status
+        description: MATCHED, UNMATCHED_CURRENT, or UNMATCHED_LEGACY.
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['MATCHED', 'UNMATCHED_CURRENT', 'UNMATCHED_LEGACY']
+      - name: match_method
+        description: EXACT_ID when matched on normalised member_ref, else NONE.
+      - name: match_confidence
+        description: HIGH when attributes agree, MEDIUM when conflicts exist.
+
+  - name: sl_canonical_members
+    description: >
+      Canonical member dimension. One row per logical core-platform member.
+      Core platform attributes are authoritative; legacy values retained for audit.
+    columns:
+      - name: canonical_member_id
+        description: Stable identifier for downstream joins and aggregation.
+        tests:
+          - not_null
+          - unique
+      - name: join_date
+        description: Date the member joined the scheme.
+      - name: pot_value
+        description: Current pot value in GBP.
+      - name: match_status
+        description: Reconciliation status against legacy CRM.
+
+  - name: sl_q2_contributions
+    description: >
+      Q2 2026 contribution transactions. One row per transaction in the reporting period.
+      Orphan contributions (no matching member) retained with is_orphan flag.
+    columns:
+      - name: transaction_id
+        description: Source transaction identifier.
+        tests:
+          - not_null
+          - unique
+      - name: transaction_date
+        description: Contribution date within Q2 2026.
+        tests:
+          - not_null
+      - name: amount
+        description: Transaction amount in GBP (negative for refunds).
+        tests:
+          - not_null
+      - name: is_orphan
+        description: True when member_id has no matching canonical member.
+
+  - name: sl_q2_transfers
+    description: >
+      Completed transfer transactions in Q2 2026. One row per transfer.
+    columns:
+      - name: transfer_id
+        description: Source transfer identifier.
+        tests:
+          - not_null
+          - unique
+      - name: transfer_date
+        description: Completed date within Q2 2026.
+        tests:
+          - not_null
+      - name: direction
+        description: IN or OUT.
+        tests:
+          - accepted_values:
+              values: ['IN', 'OUT']
+      - name: amount
+        description: Transfer value in GBP.
+        tests:
+          - not_null
+
+  - name: sl_active_members
+    description: >
+      Authoritative active-member population for Q2 reporting.
+      One row per active member. Active = Q2 contributor OR live pot at quarter end.
+    columns:
+      - name: canonical_member_id
+        description: Canonical member identifier.
+        tests:
+          - not_null
+          - unique
+      - name: date_of_birth
+        description: Member date of birth.
+      - name: age
+        description: Age in whole years at quarter end (2026-06-30).
+      - name: age_band
+        description: Mutually exclusive age band for reporting.
+        tests:
+          - accepted_values:
+              values: ['UNDER_30', '30_49', '50_64', '65_PLUS', 'UNKNOWN']
+      - name: pot_value
+        description: Current pot value in GBP.
+      - name: active_status
+        description: LIVE_POT, CONTRIBUTOR_ONLY, or LIVE_POT_AND_CONTRIBUTOR.
